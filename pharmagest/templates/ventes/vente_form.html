@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle Vente — PharmaGest{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0">Enregistrer une vente</h1>
+      <a href="{% url 'ventes:vente_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+      </a>
+    </div>
+
+    <div class="card shadow-sm border-success">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div class="text-danger small">{{ field.errors }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-success w-100 mt-3">
+            <i class="bi bi-check-circle"></i> Valider le paiement
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

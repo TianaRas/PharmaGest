@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}Achats — PharmaGest{% endblock %}
+
+{% block content %}
+<!-- En-tête de la page -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">Commandes d'achat</h4>
+    <p class="text-muted small mb-0">Gérez vos approvisionnements et vos réceptions.</p>
+  </div>
+  <a href="{% url 'achats_stock:commande_add' %}" class="btn btn-primary shadow-sm rounded-pill px-4"
+    style="background-color: #00c853; border-color: #00c853;">
+    <i class="fa-solid fa-plus me-2"></i> Nouvelle commande
+  </a>
+</div>
+
+<!-- Carte conteneur principale -->
+<div class="card border-0 shadow-sm rounded-4">
+
+  <!-- Barre d'outils (Filtres et Recherche) -->
+  <div class="card-header bg-white border-0 pt-4 pb-3 px-4">
+    <div class="row g-3 align-items-center">
+      <div class="col-md-7">
+        <!-- Filtres par statut (style maquette) -->
+        <div class="btn-group" role="group">
+          <input type="radio" class="btn-check" name="statusFilter" id="filterAll" checked>
+          <label class="btn btn-outline-secondary btn-sm rounded-pill me-2" for="filterAll">Toutes</label>
+
+          <input type="radio" class="btn-check" name="statusFilter" id="filterBrouillon">
+          <label class="btn btn-outline-dark btn-sm rounded-pill me-2" for="filterBrouillon">Brouillons</label>
+
+          <input type="radio" class="btn-check" name="statusFilter" id="filterCommande">
+          <label class="btn btn-outline-warning btn-sm rounded-pill me-2" for="filterCommande">Commandées</label>
+
+          <input type="radio" class="btn-check" name="statusFilter" id="filterReceptionnee">
+          <label class="btn btn-outline-success btn-sm rounded-pill" for="filterReceptionnee">Réceptionnées</label>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <!-- Recherche instantanée -->
+        <div class="input-group">
+          <span class="input-group-text bg-light border-0"><i
+              class="fa-solid fa-magnifying-glass text-muted"></i></span>
+          <input type="text" id="searchInput" class="form-control bg-light border-0"
+            placeholder="Rechercher par référence ou fournisseur...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des commandes -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="commandeTable">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-4 text-uppercase small fw-bold text-muted">Référence</th>
+          <th class="text-uppercase small fw-bold text-muted">Fournisseur</th>
+          <th class="text-uppercase small fw-bold text-muted">Date</th>
+          <th class="text-uppercase small fw-bold text-muted">Statut</th>
+          <th class="text-uppercase small fw-bold text-muted">Montant</th>
+          <th class="text-end pe-4 text-uppercase small fw-bold text-muted">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in commandes %}
+        <tr>
+          <td class="ps-4">
+            <h6 class="mb-0 fw-bold text-dark">{{ c.reference }}</h6>
+          </td>
+          <td>
+            <div class="d-flex align-items-center">
+              <i class="fa-solid fa-truck-medical text-muted me-2"></i>
+              {{ c.fournisseur.nom }}
+            </div>
+          </td>
+          <td>{{ c.date_commande|date:"d/m/Y" }}</td>
+          <td>
+            {% if c.statut == 'BROUILLON' %}
+            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3 py-2">Brouillon</span>
+            {% elif c.statut == 'COMMANDEE' %}
+            <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2">Commandée</span>
+            {% elif c.statut == 'PARTIELLE' %}
+            <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3 py-2">Partielle</span>
+            {% elif c.statut == 'RECEPTIONNEE' %}
+            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">Réceptionnée</span>
+            {% else %}
+            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2">Annulée</span>
+            {% endif %}
+          </td>
+          <td><strong>{{ c.total_commande|format_ar }} Ar</strong></td>
+          <td class="text-end pe-4">
+            <!-- Boutons d'action ronds -->
+            <a href="{% url 'achats_stock:commande_detail' c.id %}"
+              class="btn btn-sm btn-light border rounded-circle me-1" title="Voir le détail">
+              <i class="fa-solid fa-eye text-info"></i>
+            </a>
+            <a href="{% url 'achats_stock:commande_pdf' c.id %}" class="btn btn-sm btn-light border rounded-circle"
+              title="Imprimer le bon de commande" target="_blank">
+              <i class="fa-solid fa-file-pdf text-danger"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center py-5">
+            <i class="fa-solid fa-cart-flatbed text-muted mb-3" style="font-size: 3rem;"></i>
+            <h5 class="text-muted">Aucune commande enregistrée.</h5>
+            <a href="{% url 'achats_stock:commande_add' %}" class="btn btn-outline-success btn-sm mt-2">Créer ma
+              première commande</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Script pour la recherche instantanée et les filtres
+  document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchInput');
+    const filterRadios = document.querySelectorAll('input[name="statusFilter"]');
+    const tableRows = document.querySelectorAll('#commandeTable tbody tr');
+
+    function filterTable() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const activeFilter = document.querySelector('input[name="statusFilter"]:checked').id;
+
+      tableRows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const statusBadge = row.querySelector('.badge');
+        let statusMatch = true;
+
+        // Logique des boutons de filtre
+        if (statusBadge) {
+          const badgeText = statusBadge.innerText.trim();
+          if (activeFilter === 'filterBrouillon' && badgeText !== 'Brouillon') statusMatch = false;
+          if (activeFilter === 'filterCommande' && badgeText !== 'Commandée') statusMatch = false;
+          if (activeFilter === 'filterReceptionnee' && badgeText !== 'Réceptionnée') statusMatch = false;
+        } else {
+          statusMatch = false;
+        }
+
+        // Si la ligne correspond à la recherche ET au filtre, on l'affiche
+        if (text.includes(searchTerm) && statusMatch) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    searchInput.addEventListener('keyup', filterTable);
+    filterRadios.forEach(radio => radio.addEventListener('change', filterTable));
+  });
+</script>
+{% endblock %}

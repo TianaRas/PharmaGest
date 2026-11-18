@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}Retours de Vente — PharmaGest{% endblock %}
+
+{% block content %}
+<!-- En-tête de la page -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">Retours de Vente</h4>
+    <p class="text-muted small mb-0">Gérez les retours clients et les réintégrations de stock.</p>
+  </div>
+  <a href="{% url 'ventes:retour_add' %}" class="btn btn-warning shadow-sm rounded-pill px-4 text-dark fw-bold">
+    <i class="fa-solid fa-rotate-left me-2"></i> Enregistrer un retour
+  </a>
+</div>
+
+<!-- Carte conteneur principale -->
+<div class="card border-0 shadow-sm rounded-4">
+
+  <!-- Barre d'outils (Filtres et Recherche) -->
+  <div class="card-header bg-white border-0 pt-4 pb-3 px-4">
+    <div class="row g-3 align-items-center">
+      <div class="col-md-7">
+        <!-- Filtres par motif -->
+        <div class="btn-group" role="group">
+          <input type="radio" class="btn-check" name="motifFilter" id="filterAll" checked>
+          <label class="btn btn-outline-secondary btn-sm rounded-pill me-2" for="filterAll">Tous</label>
+
+          <input type="radio" class="btn-check" name="motifFilter" id="filterErreur">
+          <label class="btn btn-outline-danger btn-sm rounded-pill me-2" for="filterErreur">Erreur</label>
+
+          <input type="radio" class="btn-check" name="motifFilter" id="filterCasse">
+          <label class="btn btn-outline-warning btn-sm rounded-pill me-2" for="filterCasse">Casse</label>
+
+          <input type="radio" class="btn-check" name="motifFilter" id="filterAllergie">
+          <label class="btn btn-outline-info btn-sm rounded-pill" for="filterAllergie">Allergie</label>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <!-- Recherche instantanée -->
+        <div class="input-group">
+          <span class="input-group-text bg-light border-0"><i
+              class="fa-solid fa-magnifying-glass text-muted"></i></span>
+          <input type="text" id="searchInput" class="form-control bg-light border-0"
+            placeholder="Rechercher une référence, un médicament...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des retours -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="retourTable">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-4 text-uppercase small fw-bold text-muted">Date</th>
+          <th class="text-uppercase small fw-bold text-muted">Vente d'origine</th>
+          <th class="text-uppercase small fw-bold text-muted">Médicament</th>
+          <th class="text-uppercase small fw-bold text-muted">Qté</th>
+          <th class="text-uppercase small fw-bold text-muted">Motif</th>
+          <th class="text-uppercase small fw-bold text-muted">État du stock</th>
+          <th class="text-uppercase small fw-bold text-muted">Traité par</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in retours %}
+        <tr>
+          <td class="ps-4">
+            <div class="fw-bold text-dark">{{ r.date_retour|date:"d/m/Y" }}</div>
+            <small class="text-muted">{{ r.date_retour|date:"H:i" }}</small>
+          </td>
+          <td>
+            <a href="{% url 'ventes:vente_list' %}" class="text-decoration-none fw-semibold">
+              {{ r.vente_origine.reference }}
+            </a>
+          </td>
+          <td>
+            <div class="d-flex align-items-center">
+              <div
+                class="bg-primary bg-opacity-10 text-primary rounded d-flex align-items-center justify-content-center me-2"
+                style="width: 35px; height: 35px;">
+                <i class="fa-solid fa-pills"></i>
+              </div>
+              <div>
+                <h6 class="mb-0 fw-bold text-dark">{{ r.lot.medicament.nom_commercial }}</h6>
+                <small class="text-muted">Lot: {{ r.lot.numero_lot }}</small>
+              </div>
+            </div>
+          </td>
+          <td><span class="badge bg-dark rounded-pill px-2">{{ r.quantite_retournee }}</span></td>
+          <td>
+            {% if r.motif == 'ERREUR' %}
+            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2">Erreur de délivrance</span>
+            {% elif r.motif == 'CASSE' %}
+            <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2">Produit cassé</span>
+            {% elif r.motif == 'ALLERGIE' %}
+            <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3 py-2">Allergie</span>
+            {% else %}
+            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3 py-2">Autre motif</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if r.remis_en_stock %}
+            <span class="badge bg-success rounded-pill px-3 py-2">
+              <i class="fa-solid fa-check-circle me-1"></i> Remis en stock
+            </span>
+            {% else %}
+            <span class="badge bg-danger rounded-pill px-3 py-2">
+              <i class="fa-solid fa-times-circle me-1"></i> Non remis
+            </span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex align-items-center">
+              <div
+                class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center me-2 fw-bold"
+                style="width: 30px; height: 30px; font-size: 0.8rem;">
+                {{ r.utilisateur.username|make_list|first|upper }}
+              </div>
+              <span class="text-muted small">{{ r.utilisateur.username }}</span>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center py-5">
+            <i class="fa-solid fa-arrow-rotate-left text-muted mb-3" style="font-size: 3rem;"></i>
+            <h5 class="text-muted">Aucun retour enregistré pour le moment.</h5>
+            <a href="{% url 'ventes:retour_add' %}" class="btn btn-outline-warning btn-sm mt-2">Enregistrer mon premier
+              retour</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Script pour la recherche instantanée et les filtres
+  document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchInput');
+    const filterRadios = document.querySelectorAll('input[name="motifFilter"]');
+    const tableRows = document.querySelectorAll('#retourTable tbody tr');
+
+    function filterTable() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const activeFilter = document.querySelector('input[name="motifFilter"]:checked').id;
+
+      tableRows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        // On cherche le badge du motif (2ème badge de la ligne)
+        const badges = row.querySelectorAll('.badge');
+        let motifBadgeText = badges.length > 1 ? badges[1].innerText.toLowerCase() : '';
+
+        let statusMatch = true;
+
+        if (activeFilter === 'filterErreur' && !motifBadgeText.includes('erreur')) statusMatch = false;
+        if (activeFilter === 'filterCasse' && !motifBadgeText.includes('cassé')) statusMatch = false;
+        if (activeFilter === 'filterAllergie' && !motifBadgeText.includes('allergie')) statusMatch = false;
+
+        if (text.includes(searchTerm) && statusMatch) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    searchInput.addEventListener('keyup', filterTable);
+    filterRadios.forEach(radio => radio.addEventListener('change', filterTable));
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}Historique des Ventes — PharmaGest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Historique des Ventes</h1>
+  <div class="d-flex gap-2">
+    <form method="get" class="d-flex">
+      <select name="tri" class="form-select form-select-sm me-2 shadow-sm border-0" onchange="this.form.submit()">
+        <option value="-date_vente" {% if tri == '-date_vente' %}selected{% endif %}>Plus récentes</option>
+        <option value="date_vente" {% if tri == 'date_vente' %}selected{% endif %}>Plus anciennes</option>
+        <option value="-total" {% if tri == '-total' %}selected{% endif %}>Montant (décroissant)</option>
+        <option value="total" {% if tri == 'total' %}selected{% endif %}>Montant (croissant)</option>
+      </select>
+    </form>
+    <a href="{% url 'ventes:vente_add' %}" class="btn btn-success shadow-sm">
+      <i class="fa-solid fa-cart-plus me-2"></i> Nouvelle Vente
+    </a>
+  </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-4">Référence</th>
+          <th>Date</th>
+          <th>Client</th>
+          <th>Total</th>
+          <th>Statut</th>
+          <th class="text-end pe-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in ventes %}
+        <tr>
+          <td class="ps-4"><strong>{{ v.reference }}</strong></td>
+          <td>{{ v.date_vente|date:"d/m/Y H:i" }}</td>
+          <td>{{ v.client.nom|default:"Client comptoir" }}</td>
+          <td><strong>{{ v.total|format_ar }} Ar</strong></td>
+          <td>
+            {% if v.statut == 'VALIDEE' %}
+            <span class="badge bg-success rounded-pill">Validée</span>
+            {% else %}
+            <span class="badge bg-danger rounded-pill">Annulée</span>
+            {% endif %}
+          </td>
+          <td class="text-end pe-4">
+            <a href="{% url 'ventes:telecharger_recu' v.id %}" class="btn btn-sm btn-outline-danger" target="_blank">
+              <i class="fa-solid fa-file-pdf me-1"></i> Reçu
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center py-4 text-muted">Aucune vente enregistrée.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Pagination -->
+<nav class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if ventes.has_previous %}
+    <li class="page-item"><a class="page-link" href="?page=1{% if tri %}&tri={{ tri }}{% endif %}">&laquo; Première</a>
+    </li>
+    <li class="page-item"><a class="page-link"
+        href="?page={{ ventes.previous_page_number }}{% if tri %}&tri={{ tri }}{% endif %}">Précédent</a></li>
+    {% endif %}
+    <li class="page-item active"><span class="page-link">Page {{ ventes.number }} / {{ ventes.paginator.num_pages
+        }}</span></li>
+    {% if ventes.has_next %}
+    <li class="page-item"><a class="page-link"
+        href="?page={{ ventes.next_page_number }}{% if tri %}&tri={{ tri }}{% endif %}">Suivant</a></li>
+    <li class="page-item"><a class="page-link"
+        href="?page={{ ventes.paginator.num_pages }}{% if tri %}&tri={{ tri }}{% endif %}">Dernière &raquo;</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endblock %}

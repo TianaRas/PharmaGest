@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}Caisse Rapide — PharmaGest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0"><i class="fa-solid fa-calculator text-success me-2"></i> Caisse Rapide</h1>
+  <a href="{% url 'ventes:vente_list' %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+    <i class="fa-solid fa-arrow-left me-1"></i> Retour à l'historique
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Grille des produits -->
+  <div class="col-md-7">
+    <div class="card shadow-sm border-0 rounded-4 h-100">
+      <div class="card-header bg-white border-0 pt-4 pb-0 rounded-top-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Produits</h5>
+          <input type="text" id="searchProduct" class="form-control w-50 bg-light border-0" placeholder="Rechercher..."
+            onkeyup="filterProducts()">
+        </div>
+
+        <!-- BOUTONS DE CATÉGORIES -->
+        <div class="d-flex flex-wrap gap-2 pb-3 border-bottom">
+          <button class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm"
+            onclick="filterCategory('all', this)">Tous</button>
+          {% for cat in categories %}
+          <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+            onclick="filterCategory('{{ cat.nom|slugify }}', this)">
+            {{ cat.nom }}
+          </button>
+          {% endfor %}
+        </div>
+
+      </div>
+
+      <div class="card-body pt-4">
+        <div class="row g-3" id="productGrid">
+          {% for lot in lots %}
+          <div class="col-6 col-lg-4 product-card" data-name="{{ lot.medicament.nom_commercial|lower }}"
+            data-category="{{ lot.medicament.categorie.nom|slugify }}">
+            <div class="card h-100 shadow-sm border-0 product-item"
+              style="cursor: pointer; transition: all 0.2s; border-radius: 1rem;"
+              onclick="selectProduct('{{ lot.id }}')" onmouseover="this.classList.add('border', 'border-success')"
+              onmouseout="this.classList.remove('border', 'border-success')">
+              <div class="card-body text-center p-3">
+                {% if lot.medicament.photo %}
+                <img src="{{ lot.medicament.photo.url }}" alt="img"
+                  style="width: 50px; height: 50px; object-fit: contain;" class="mb-2">
+                {% else %}
+                <i class="fa-solid fa-pills fs-1 text-secondary mb-2 d-block opacity-50"></i>
+                {% endif %}
+                <h6 class="card-title fw-bold mb-1 text-truncate" title="{{ lot.medicament.nom_commercial }}">{{
+                  lot.medicament.nom_commercial }}</h6>
+                <small class="text-muted d-block text-truncate">Lot: {{ lot.numero_lot }}</small>
+                <span class="badge bg-success mt-2 rounded-pill">{{ lot.medicament.prix_vente|format_ar }} Ar</span>
+                <div class="small text-muted mt-1">Reste: {{ lot.quantite_actuelle }}</div>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="col-12 text-center text-muted py-4">Aucun produit en stock.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire de paiement -->
+  <div class="col-md-5">
+    <div class="card shadow-sm border-0 border-top border-4 border-success h-100 rounded-4" id="checkoutCard">
+      <div class="card-header bg-white border-0 pt-4 rounded-top-4">
+        <h5 class="fw-bold mb-0"><i class="fa-solid fa-cart-check text-success me-2"></i> Finaliser la vente</h5>
+      </div>
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-bold text-muted small">MÉDICAMENT / LOT</label>
+            {{ form.lot }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold text-muted small">QUANTITÉ</label>
+            {{ form.quantite }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold text-muted small">CLIENT (Optionnel)</label>
+            {{ form.client }}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-bold text-muted small">MODE DE PAIEMENT</label>
+            {{ form.mode_paiement }}
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-success btn-lg fw-bold rounded-pill">
+              <i class="fa-solid fa-check-circle me-2"></i> Valider le paiement
+            </button>
+            <a href="{% url 'ventes:caisse_rapide' %}" class="btn btn-light rounded-pill">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function selectProduct(lotId) {
+    const selectLot = document.getElementById('id_lot');
+    selectLot.value = lotId;
+    const inputQuantite = document.getElementById('id_quantite');
+    inputQuantite.value = 1;
+    inputQuantite.focus();
+
+    const formCard = document.getElementById('checkoutCard');
+    formCard.style.transform = 'scale(1.02)';
+    setTimeout(() => { formCard.style.transform = 'scale(1)'; }, 200);
+  }
+
+  function filterProducts() {
+    const input = document.getElementById('searchProduct');
+    const filter = input.value.toLowerCase();
+    const cards = document.getElementsByClassName('product-card');
+    for (let i = 0; i < cards.length; i++) {
+      const name = cards[i].getAttribute('data-name');
+      cards[i].style.display = name.includes(filter) ? "" : "none";
+    }
+  }
+
+  function filterCategory(categorySlug, btn) {
+    const buttons = btn.parentElement.querySelectorAll('button');
+    buttons.forEach(b => {
+      b.classList.remove('btn-primary', 'active');
+      b.classList.add('btn-outline-secondary');
+    });
+    btn.classList.remove('btn-outline-secondary');
+    btn.classList.add('btn-primary');
+
+    const cards = document.getElementsByClassName('product-card');
+    for (let i = 0; i < cards.length; i++) {
+      const cat = cards[i].getAttribute('data-category');
+      if (categorySlug === 'all' || cat === categorySlug) {
+        cards[i].style.display = "";
+      } else {
+        cards[i].style.display = "none";
+      }
+    }
+    document.getElementById('searchProduct').value = '';
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Ajustement de Stock — PharmaGest{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0">Ajuster le stock</h1>
+      <a href="{% url 'achats_stock:stock_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+      </a>
+    </div>
+
+    <div class="card shadow-sm border-info">
+      <div class="card-body p-4">
+        <div class="alert alert-warning py-2">
+          <i class="bi bi-exclamation-triangle"></i> Attention : Cette action va modifier directement la quantité en
+          stock et créer un mouvement traçable.
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div class="text-danger small">{{ field.errors }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-info w-100 mt-3 text-white">Valider l'ajustement</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

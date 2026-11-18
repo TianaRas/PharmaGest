@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Journal d'Audit — PharmaGest{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">Journal d'Audit</h1>
+<p class="text-muted">Historique des 200 dernières opérations sensibles effectuées dans le système.</p>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Date</th>
+          <th>Utilisateur</th>
+          <th>Action</th>
+          <th>Objet concerné</th>
+          <th>Détails</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.date|date:"d/m/Y H:i:s" }}</td>
+          <td>
+            {% if log.utilisateur %}
+            <strong>{{ log.utilisateur.username }}</strong>
+            {% else %}
+            <em class="text-muted">Système</em>
+            {% endif %}
+          </td>
+          <td><span class="badge bg-info text-dark">{{ log.action }}</span></td>
+          <td>{{ log.objet }}</td>
+          <td><small class="text-muted">{{ log.details }}</small></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center py-4 text-muted">Aucune opération enregistrée.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Nouveau Retour — PharmaGest{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0">Enregistrer un retour</h1>
+      <a href="{% url 'ventes:retour_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+      </a>
+    </div>
+
+    <div class="card shadow-sm border-warning">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div class="text-danger small">{{ field.errors }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <div class="alert alert-info py-2 mt-3">
+            <small><i class="bi bi-info-circle"></i> Ne cochez "Remis en stock" que si le produit est intact et dans son
+              emballage d'origine.</small>
+          </div>
+          <button type="submit" class="btn btn-warning w-100">Enregistrer le retour</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ titre }} — PharmaGest{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0">{{ titre }}</h1>
+      <a href="{% url 'achats_stock:commande_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+      </a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <!-- Affichage des erreurs générales du formulaire -->
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">{{ field.label }}</label>
+            {{ field }}
+
+            <!-- Affichage des erreurs spécifiques à chaque champ -->
+            {% if field.errors %}
+            <div class="text-danger small mt-1">
+              {{ field.errors }}
+            </div>
+            {% endif %}
+
+            {% if field.help_text %}
+            <div class="form-text small">{{ field.help_text }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-success w-100 mt-3">Créer la commande</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

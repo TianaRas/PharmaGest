@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}Clients — PharmaGest{% endblock %}
+
+{% block content %}
+<!-- En-tête de la page -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">Clients</h4>
+    <p class="text-muted small mb-0">Gérez votre base de clients et suivez leurs achats.</p>
+  </div>
+  <a href="{% url 'partenaires:client_add' %}" class="btn btn-primary shadow-sm rounded-pill px-4" style="background-color: #00c853; border-color: #00c853;">
+    <i class="fa-solid fa-plus me-2"></i> Ajouter un client
+  </a>
+</div>
+
+<!-- Carte conteneur principale -->
+<div class="card border-0 shadow-sm rounded-4">
+  
+  <!-- Barre d'outils (Recherche) -->
+  <div class="card-header bg-white border-0 pt-4 pb-3 px-4">
+    <div class="row g-3 align-items-center">
+      <div class="col-md-6">
+        <h5 class="mb-0 fw-bold text-muted small text-uppercase">Liste des clients</h5>
+      </div>
+      <div class="col-md-6">
+        <div class="input-group">
+          <span class="input-group-text bg-light border-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+          <input type="text" id="searchInput" class="form-control bg-light border-0" placeholder="Rechercher un client par nom ou téléphone...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des clients -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="clientTable">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-4 text-uppercase small fw-bold text-muted" style="width: 40%;">Nom du client</th>
+          <th class="text-uppercase small fw-bold text-muted">Téléphone</th>
+          <th class="text-uppercase small fw-bold text-muted">Email</th>
+          <th class="text-uppercase small fw-bold text-muted">Date d'inscription</th>
+          <th class="text-end pe-4 text-uppercase small fw-bold text-muted">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in clients %}
+        <tr>
+          <td class="ps-4">
+            <div class="d-flex align-items-center">
+              <!-- Avatar avec initiale -->
+              <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 40px; height: 40px;">
+                {{ c.nom|make_list|first|upper }}
+              </div>
+              <div>
+                <h6 class="mb-0 fw-bold text-dark">{{ c.nom }}</h6>
+                <small class="text-muted">Client enregistré</small>
+              </div>
+            </div>
+          </td>
+          <td>{{ c.telephone|default:"-" }}</td>
+          <td>{{ c.email|default:"-" }}</td>
+          <td>{{ c.date_creation|date:"d/m/Y" }}</td>
+          <td class="text-end pe-4">
+            <!-- Boutons d'action ronds -->
+            <a href="{% url 'partenaires:client_edit' c.id %}" class="btn btn-sm btn-light border rounded-circle me-1" title="Modifier">
+              <i class="fa-solid fa-pen text-warning"></i>
+            </a>
+            <a href="{% url 'partenaires:client_detail' c.id %}" class="btn btn-sm btn-light border rounded-circle" title="Voir l'historique">
+              <i class="fa-solid fa-eye text-info"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center py-5">
+            <i class="fa-solid fa-users text-muted mb-3" style="font-size: 3rem;"></i>
+            <h5 class="text-muted">Aucun client enregistré pour le moment.</h5>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Script de recherche instantanée
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const tableRows = document.querySelectorAll('#clientTable tbody tr');
+
+    searchInput.addEventListener('keyup', function() {
+      const searchTerm = this.value.toLowerCase();
+
+      tableRows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        if (text.includes(searchTerm)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

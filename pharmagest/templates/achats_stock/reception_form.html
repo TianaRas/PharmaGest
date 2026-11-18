@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Réceptionner la commande{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h1 class="h3 mb-4">Réceptionner : {{ commande.reference }}</h1>
+    <div class="card shadow-sm border-warning">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">{{ field.label }}</label>
+            {{ field }}
+          </div>
+          {% endfor %}
+          <p class="text-muted small">Cette action va créer les lots en stock et augmenter les quantités disponibles.
+          </p>
+          <button type="submit" class="btn btn-warning w-100">Confirmer la réception</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Commande {{ commande.reference }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+  <h1 class="h3 mb-0">Commande {{ commande.reference }}</h1>
+  <a href="{% url 'achats_stock:commande_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Retour
+  </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <p><strong>Fournisseur :</strong> {{ commande.fournisseur.nom }}</p>
+        <p><strong>Date :</strong> {{ commande.date_commande|date:"d/m/Y" }}</p>
+        <p><strong>Total :</strong> {{ commande.total_commande }} Ar</p>
+      </div>
+      <div class="col-md-6 text-end">
+        <p>
+          <strong>Statut :</strong>
+          <span
+            class="badge {% if commande.statut == 'BROUILLON' %}bg-secondary{% elif commande.statut == 'COMMANDEE' %}bg-warning text-dark{% elif commande.statut == 'PARTIELLE' %}bg-info text-dark{% elif commande.statut == 'RECEPTIONNEE' %}bg-success{% else %}bg-danger{% endif %}">
+            {{ commande.get_statut_display }}
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <a href="{% url 'achats_stock:commande_pdf' commande.id %}" class="btn btn-outline-danger btn-sm">
+        <i class="bi bi-file-earmark-pdf"></i> Bon de Commande
+      </a>
+      {% if commande.statut == 'RECEPTIONNEE' or commande.statut == 'PARTIELLE' %}
+      <a href="{% url 'achats_stock:reception_pdf' commande.id %}" class="btn btn-outline-danger btn-sm">
+        <i class="bi bi-file-earmark-check"></i> Bon de Réception
+      </a>
+      {% endif %}
+
+      {% if commande.statut == 'BROUILLON' %}
+      <a href="{% url 'achats_stock:commande_valider' commande.id %}" class="btn btn-primary btn-sm">Valider</a>
+      <a href="{% url 'achats_stock:commande_annuler' commande.id %}" class="btn btn-outline-danger btn-sm"
+        onclick="return confirm('Annuler cette commande ?')">Annuler</a>
+      {% elif commande.statut == 'COMMANDEE' or commande.statut == 'PARTIELLE' %}
+      <a href="{% url 'achats_stock:commande_annuler' commande.id %}" class="btn btn-outline-danger btn-sm"
+        onclick="return confirm('Annuler cette commande ?')">Annuler</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white">
+    <h5 class="mb-0">Lignes de la commande</h5>
+  </div>
+  <table class="table mb-0 align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Médicament</th>
+        <th>Qté commandée</th>
+        <th>Qté reçue</th>
+        <th>Reste à recevoir</th>
+        <th>Prix U.</th>
+        <th>Sous-total</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in commande.lignes.all %}
+      <tr>
+        <td><strong>{{ l.medicament.nom_commercial }}</strong></td>
+        <td>{{ l.quantite_commandee }}</td>
+        <td>{{ l.quantite_recue }}</td>
+        <td>
+          {% if l.reste_a_recevoir > 0 %}
+          <span class="badge bg-warning text-dark">{{ l.reste_a_recevoir }}</span>
+          {% else %}
+          <span class="badge bg-success">Complet</span>
+          {% endif %}
+        </td>
+        <td>{{ l.prix_achat_unitaire }} Ar</td>
+        <td>{{ l.sous_total }} Ar</td>
+        <td>
+          {% if commande.statut == 'COMMANDEE' or commande.statut == 'PARTIELLE' %}
+          {% if l.reste_a_recevoir > 0 %}
+          <a href="{% url 'achats_stock:ligne_receptionner' l.id %}" class="btn btn-sm btn-success">Réceptionner</a>
+          {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if commande.statut == 'BROUILLON' %}
+<div class="card shadow-sm">
+  <div class="card-header bg-white">
+    <h5 class="mb-0">Ajouter un médicament</h5>
+  </div>
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-5">
+          <select name="medicament" class="form-select" required>
+            <option value="">-- Choisir un médicament --</option>
+            {% for m in medicaments %}
+            <option value="{{ m.id }}">{{ m.nom_commercial }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <input type="number" name="quantite" class="form-control" placeholder="Qté" min="1" required>
+        </div>
+        <div class="col-md-3">
+          <input type="number" name="prix" class="form-control" placeholder="Prix d'achat" step="0.01" required>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-success w-100">Ajouter</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
